@@ -4,7 +4,8 @@
 
 Upload any CSV and ask questions in plain English. AskMyData generates and executes Python code behind the scenes to analyze your data and return answers as text or charts.
 
-![AskMyData UI](./screenshot.png)
+![AskMyData UI](./img/screenshot1.png)
+![AskMyData UI](./img/screenshot2.png)
 
 ---
 

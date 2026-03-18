@@ -12,18 +12,18 @@ export default function ConversationWindow({ history }: ConversationWindowProps)
       <div className="mt-4 max-h-[420px] space-y-3 overflow-auto pr-2">
         {history.length ? (
           history.map((item, index) => (
-            <div key={`${item.question}-${index}`} className="rounded-xl border border-slate-200 bg-white p-4">
-              <div className="text-xs uppercase tracking-wide text-slate-400">Question</div>
-              <div className="mt-1 text-sm font-semibold text-slate-800">{item.question}</div>
-              <div className="mt-3 text-xs uppercase tracking-wide text-slate-400">Answer</div>
-              <div className="mt-1 text-xs text-slate-600">
+            <div key={`${item.question}-${index}`} className="rounded-xl border border-ember/60 bg-main/70 p-4">
+              <div className="text-xs uppercase tracking-wide text-white/60">Question</div>
+              <div className="mt-1 text-sm font-semibold text-white">{item.question}</div>
+              <div className="mt-3 text-xs uppercase tracking-wide text-white/60">Answer</div>
+              <div className="mt-1 text-xs text-white/70">
                 {item.answer ? item.answer.slice(0, 160) : "Chart generated or no text answer."}
                 {item.answer && item.answer.length > 160 ? "…" : ""}
               </div>
             </div>
           ))
         ) : (
-          <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
+          <div className="rounded-xl border border-dashed border-ember/50 bg-main/40 px-4 py-10 text-center text-sm text-white/60">
             Ask a question to start the conversation.
           </div>
         )}

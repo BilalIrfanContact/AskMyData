@@ -33,14 +33,14 @@ export default function ChatInput({ onSubmit, isLoading, disabled }: ChatInputPr
           }
         }}
         placeholder="Ask a question about the data..."
-        className="min-h-[96px] w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-ocean focus:outline-none"
+        className="min-h-[96px] w-full resize-none rounded-xl border border-ember/60 bg-main/60 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-accent focus:outline-none"
         disabled={disabled}
       />
       <div className="flex items-center justify-between gap-3">
-        <div className="text-xs text-slate-500">Press Enter to send · Shift+Enter for new line</div>
+        <div className="text-xs text-white/50">Press Enter to send · Shift+Enter for new line</div>
         <button
           type="submit"
-          className="rounded-full bg-ocean text-white px-5 py-2 text-sm font-semibold transition hover:bg-ocean/90 disabled:cursor-not-allowed disabled:bg-slate-300"
+          className="rounded-full bg-accent text-main px-5 py-2 text-sm font-semibold transition hover:bg-accent/90 disabled:cursor-not-allowed disabled:bg-ember/50 disabled:text-white/60"
           disabled={disabled || isLoading}
         >
           {isLoading ? "Analyzing..." : "Send"}

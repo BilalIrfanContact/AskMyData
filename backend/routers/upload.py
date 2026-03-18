@@ -6,7 +6,7 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from backend.models.schemas import UploadResponse
 from backend.services.csv_loader import load_csv
-from backend.services.session_store import active_sessions
+from backend.services.session_store import SessionData, active_sessions
 
 router = APIRouter()
 
@@ -22,7 +22,7 @@ async def upload_csv(file: UploadFile = File(...)) -> UploadResponse:
         raise HTTPException(status_code=400, detail=f"Failed to read CSV: {exc}") from exc
 
     session_id = str(uuid.uuid4())
-    active_sessions[session_id] = df
+    active_sessions[session_id] = SessionData(df=df)
 
     return UploadResponse(
         session_id=session_id,

@@ -2,7 +2,7 @@
 
 **Talk to your data, not about it.**
 
-Upload any CSV and ask questions in plain English. AskMyData generates and executes Python code behind the scenes to analyze your data and return answers as text or charts — no SQL, no formulas, no coding required.
+Upload any CSV and ask questions in plain English. AskMyData generates and executes Python code behind the scenes to analyze your data and return answers as text or charts.
 
 ![AskMyData UI](./screenshot.png)
 
@@ -20,9 +20,9 @@ Built to understand how agentic AI works in practice specifically the pattern of
 - Ask questions in plain English and get accurate answers
 - Auto-generates and executes Python (pandas + matplotlib) to answer each question
 - Returns text answers and rendered charts in the same conversation
-- Self-correcting pipeline — if generated code fails, it automatically retries with the error as context
-- Sandboxed code execution — generated code runs in a restricted environment with no access to the file system or network
-- Strict dataset scope — questions unrelated to the uploaded data are refused cleanly
+- Self-correcting pipeline if generated code fails, it automatically retries with the error as context
+- Sandboxed code execution generated code runs in a restricted environment with no access to the file system or network
+- Strict dataset scope questions unrelated to the uploaded data are refused cleanly
 
 ---
 
@@ -65,9 +65,6 @@ Built to understand how agentic AI works in practice specifically the pattern of
 ### Frontend
 - **Next.js** (App Router) with **TypeScript**
 - **Tailwind CSS** — styling
-
----
-
 
 ---
 
@@ -118,7 +115,7 @@ NEXT_PUBLIC_API_BASE=http://localhost:8000
 
 ---
 
-## API
+## APIs
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|

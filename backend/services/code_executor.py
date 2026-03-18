@@ -13,9 +13,26 @@ import pandas as pd
 import seaborn as sns
 
 
+def _safe_import(name, globals=None, locals=None, fromlist=(), level=0):  # noqa: ANN001,D401
+    root = name.split(".")[0]
+    if root in {"pandas", "matplotlib", "seaborn"}:
+        return __import__(name, globals, locals, fromlist, level)
+    raise ImportError("Imports are restricted in the analysis sandbox.")
+
+
 def execute_generated_code(generated_code: str, dataframe: pd.DataFrame) -> dict[str, Any]:
+    safe_builtins = {
+        "range": range,
+        "len": len,
+        "min": min,
+        "max": max,
+        "sum": sum,
+        "abs": abs,
+        "__import__": _safe_import,
+    }
+
     restricted_globals = {
-        "__builtins__": {},
+        "__builtins__": safe_builtins,
         "pd": pd,
         "plt": plt,
         "sns": sns,

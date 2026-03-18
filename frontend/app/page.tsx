@@ -53,7 +53,7 @@ export default function HomePage() {
     return (
       <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center px-6 py-16">
         <div className="flex flex-col gap-6">
-          <div className="text-xs uppercase tracking-[0.3em] text-slate-400">Autonomous Data Analyst</div>
+          <div className="text-xs uppercase tracking-[0.3em] text-slate-400">AskMyData</div>
           <h1 className="text-4xl font-semibold">Start by uploading a CSV file.</h1>
           <p className="text-sm text-slate-600">
             Once your dataset is loaded, you can chat with it and receive answers and charts in real time.
@@ -73,7 +73,7 @@ export default function HomePage() {
     <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-8 px-6 py-12">
       <header className="flex items-center justify-between gap-4">
         <div>
-          <div className="text-xs uppercase tracking-[0.3em] text-slate-400">Autonomous Data Analyst</div>
+          <div className="text-xs uppercase tracking-[0.3em] text-slate-400">AskMyData</div>
           <h1 className="text-2xl font-semibold">Dataset loaded</h1>
         </div>
         <button

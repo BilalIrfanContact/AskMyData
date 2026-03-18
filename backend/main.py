@@ -10,7 +10,7 @@ from backend.routers import analyze, upload
 
 load_dotenv()
 
-app = FastAPI(title="Autonomous Data Analyst")
+app = FastAPI(title="AskMyData")
 
 allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
 

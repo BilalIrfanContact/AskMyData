@@ -15,7 +15,7 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Autonomous Data Analyst",
+  title: "AskMyData",
   description: "Upload a CSV and ask questions with agentic AI-powered analysis.",
 };
 

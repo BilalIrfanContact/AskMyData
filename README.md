@@ -74,15 +74,15 @@ Built to understand how agentic AI works in practice specifically the pattern of
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/your-username/askmydata.git
-cd askmydata
+git clone https://github.com/BilalIrfanContact/AskMyData.git
+cd AskMyData
 ```
 
 ### 2. Backend
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
+source .venv/bin/activate     
 pip install -r backend/requirements.txt
 cp backend/.env.example backend/.env
 # Add your OpenAI API key to backend/.env

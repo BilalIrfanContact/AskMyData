@@ -83,14 +83,6 @@ class CodeGenerator:
             + "\n\nQuestion:\n"
             + question
         )
-        messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-        if history:
-            for entry in history[-6:]:
-                role = entry.get("role", "user")
-                content = entry.get("content", "")
-                if role in {"user", "assistant"} and content:
-                    messages.append({"role": role, "content": content})
-        messages.append({"role": "user", "content": user_content})
         if error and previous_code:
             user_content += (
                 "\n\nThe previous code failed with this error:\n"
@@ -99,6 +91,14 @@ class CodeGenerator:
                 + previous_code
                 + "\n\nPlease return corrected executable Python code only."
             )
+        messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+        if history:
+            for entry in history[-6:]:
+                role = entry.get("role", "user")
+                content = entry.get("content", "")
+                if role in {"user", "assistant"} and content:
+                    messages.append({"role": role, "content": content})
+        messages.append({"role": "user", "content": user_content})
 
         response = self.client.chat.completions.create(
             model=self.model,

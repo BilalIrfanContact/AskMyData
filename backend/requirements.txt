@@ -6,3 +6,5 @@ seaborn
 python-multipart
 python-dotenv
 openai
+PyJWT
+supabase

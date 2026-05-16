@@ -67,6 +67,7 @@ export function chartToImageSource(chart?: string | null): string | undefined {
 
 export async function uploadDataset(
   file: File,
+  accessToken: string,
   onProgress?: (percent: number) => void,
 ): Promise<Dataset> {
   const formData = new FormData();
@@ -75,6 +76,7 @@ export async function uploadDataset(
   const response = await new Promise<UploadResponse>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", `${API_BASE_URL}/upload`);
+    xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
 
     xhr.upload.addEventListener("progress", (event) => {
       if (!event.lengthComputable) return;
@@ -127,11 +129,16 @@ export async function uploadDataset(
   };
 }
 
-export async function analyzeQuestion(sessionId: string, question: string): Promise<AnalysisResult> {
+export async function analyzeQuestion(
+  sessionId: string,
+  question: string,
+  accessToken: string,
+): Promise<AnalysisResult> {
   const res = await fetch(`${API_BASE_URL}/analyze`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify({
       session_id: sessionId,

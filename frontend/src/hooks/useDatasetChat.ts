@@ -7,11 +7,12 @@ function newId() {
   return crypto.randomUUID();
 }
 
-export function useDatasetChat(sessionId: string) {
+export function useDatasetChat(sessionId: string, accessToken: string) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   const mutation = useMutation({
-    mutationFn: ({ question }: { question: string }) => analyzeQuestion(sessionId, question),
+    mutationFn: ({ question }: { question: string }) =>
+      analyzeQuestion(sessionId, question, accessToken),
     onSuccess: (result) => {
       setMessages((current) => [
         ...current,

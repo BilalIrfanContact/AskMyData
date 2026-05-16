@@ -15,13 +15,14 @@ const SUGGESTED_QUESTIONS = [
 
 interface ChatContainerProps {
   dataset: Dataset;
+  accessToken: string;
 }
 
-export function ChatContainer({ dataset }: ChatContainerProps) {
+export function ChatContainer({ dataset, accessToken }: ChatContainerProps) {
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const { messages, sendQuestion, isBusy } = useDatasetChat(dataset.sessionId);
+  const { messages, sendQuestion, isBusy } = useDatasetChat(dataset.sessionId, accessToken);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({

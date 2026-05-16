@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import re
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from backend.models.schemas import AnalyzeRequest, AnalyzeResponse
+from backend.services.auth import AuthUser, get_current_user
 from backend.services.code_executor import execute_generated_code
 from backend.services.code_generator import CodeGenerator, REFUSAL_MESSAGE
 from backend.services.session_store import active_sessions
+from backend.services.supabase_store import persist_chat_message
 
 router = APIRouter()
 _code_generator: CodeGenerator | None = None
@@ -131,10 +133,15 @@ def is_likely_in_scope(question: str, columns: list[str]) -> bool:
 
 
 @router.post("/analyze", response_model=AnalyzeResponse)
-async def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
+async def analyze(
+    request: AnalyzeRequest,
+    current_user: AuthUser = Depends(get_current_user),
+) -> AnalyzeResponse:
     session = active_sessions.get(request.session_id)
     if session is None:
         raise HTTPException(status_code=404, detail="Session not found. Upload a CSV first.")
+    if session.user_id != current_user.user_id:
+        raise HTTPException(status_code=403, detail="You do not have access to this session.")
 
     df = session.df
     columns = [str(col) for col in df.columns.tolist()]
@@ -148,6 +155,18 @@ async def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
         session.history.append({"role": "user", "content": request.question})
         session.history.append({"role": "assistant", "content": answer})
         session.history = session.history[-8:]
+        persist_chat_message(
+            user_id=current_user.user_id,
+            session_id=request.session_id,
+            role="user",
+            content=request.question,
+        )
+        persist_chat_message(
+            user_id=current_user.user_id,
+            session_id=request.session_id,
+            role="assistant",
+            content=answer,
+        )
         return AnalyzeResponse(answer=answer, chart=None)
 
     code_generator = get_code_generator()
@@ -222,10 +241,30 @@ async def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
         answer = "No answer could be produced for that question."
 
     session.history.append({"role": "user", "content": request.question})
+    persist_chat_message(
+        user_id=current_user.user_id,
+        session_id=request.session_id,
+        role="user",
+        content=request.question,
+    )
     if answer:
         session.history.append({"role": "assistant", "content": answer})
+        persist_chat_message(
+            user_id=current_user.user_id,
+            session_id=request.session_id,
+            role="assistant",
+            content=answer,
+            chart=chart,
+        )
     elif chart:
         session.history.append({"role": "assistant", "content": "Generated a chart."})
+        persist_chat_message(
+            user_id=current_user.user_id,
+            session_id=request.session_id,
+            role="assistant",
+            content="Generated a chart.",
+            chart=chart,
+        )
 
     session.history = session.history[-8:]
 

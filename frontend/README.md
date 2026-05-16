@@ -1,6 +1,6 @@
 # AskMyData Frontend
 
-Production frontend for AskMyData, rebuilt from the `data-muse` prototype UI and fully connected to the live backend APIs.
+Production frontend for AskMyData, with Supabase Google auth and backend API integration.
 
 ## Setup
 
@@ -10,4 +10,10 @@ npm install
 npm run dev
 ```
 
-The app uses `VITE_API_BASE_URL` from `.env.local`.
+## Env vars (`frontend/.env.local`)
+
+```bash
+VITE_API_BASE_URL=http://localhost:8000
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_ANON_KEY=...
+```

@@ -67,3 +67,34 @@ def persist_chat_message(
         "created_at": _utc_now_iso(),
     }
     client.table("messages").insert(payload).execute()
+
+
+def list_documents_for_user(*, user_id: str) -> list[dict[str, Any]]:
+    client = _get_client()
+    if client is None:
+        return []
+
+    response = (
+        client.table("documents")
+        .select("id, filename, columns, dtypes, created_at")
+        .eq("user_id", user_id)
+        .order("created_at", desc=True)
+        .execute()
+    )
+    return list(response.data or [])
+
+
+def list_messages_for_session(*, user_id: str, session_id: str) -> list[dict[str, Any]]:
+    client = _get_client()
+    if client is None:
+        return []
+
+    response = (
+        client.table("messages")
+        .select("role, content, chart, is_error, created_at")
+        .eq("user_id", user_id)
+        .eq("session_id", session_id)
+        .order("created_at", desc=False)
+        .execute()
+    )
+    return list(response.data or [])

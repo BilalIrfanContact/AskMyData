@@ -1,5 +1,5 @@
-import { Calendar, Database, Hash, RotateCcw, ToggleLeft, Type } from "lucide-react";
-import type { ColumnType, Dataset } from "@/types/workspace";
+import { Calendar, Database, Hash, History, RotateCcw, ToggleLeft, Type } from "lucide-react";
+import type { ColumnType, Dataset, StoredDocumentSummary } from "@/types/workspace";
 import { formatBytes } from "@/lib/utils";
 import { Logo } from "@/components/workspace/Logo";
 
@@ -23,9 +23,17 @@ interface SidebarProps {
   dataset: Dataset;
   onReset: () => void;
   compact?: boolean;
+  documents?: StoredDocumentSummary[];
+  onSelectDocument?: (doc: StoredDocumentSummary) => void;
 }
 
-export function Sidebar({ dataset, onReset, compact = false }: SidebarProps) {
+export function Sidebar({
+  dataset,
+  onReset,
+  compact = false,
+  documents = [],
+  onSelectDocument,
+}: SidebarProps) {
   return (
     <aside
       className={
@@ -58,6 +66,32 @@ export function Sidebar({ dataset, onReset, compact = false }: SidebarProps) {
       </div>
 
       <div className={`${compact ? "max-h-[28vh]" : "flex-1"} overflow-y-auto scrollbar-thin`}>
+        {documents.length > 0 && (
+          <>
+            <div className="sticky top-0 z-10 flex items-center justify-between bg-card/80 px-4 py-3 text-xs uppercase tracking-wider text-muted-foreground backdrop-blur">
+              <span className="inline-flex items-center gap-1">
+                <History className="h-3 w-3" />
+                Recent
+              </span>
+            </div>
+            <ul className="px-2 pb-3">
+              {documents.slice(0, 8).map((doc) => (
+                <li key={doc.sessionId}>
+                  <button
+                    onClick={() => onSelectDocument?.(doc)}
+                    className="w-full rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-secondary"
+                  >
+                    <div className="truncate text-sm">{doc.fileName}</div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {new Date(doc.createdAt).toLocaleString()}
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+
         <div className="sticky top-0 z-10 flex items-center justify-between bg-card/80 px-4 py-3 text-xs uppercase tracking-wider text-muted-foreground backdrop-blur">
           <span>Schema</span>
           <span>{dataset.columns.length}</span>

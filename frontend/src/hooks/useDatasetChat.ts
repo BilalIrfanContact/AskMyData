@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { analyzeQuestion } from "@/lib/api/client";
+import { useEffect, useMemo, useState } from "react";
+import { analyzeQuestion, getDocumentMessages } from "@/lib/api/client";
 import type { ChatMessage } from "@/types/workspace";
 
 function newId() {
@@ -9,6 +9,7 @@ function newId() {
 
 export function useDatasetChat(sessionId: string, accessToken: string) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   const mutation = useMutation({
     mutationFn: ({ question }: { question: string }) =>
@@ -61,16 +62,39 @@ export function useDatasetChat(sessionId: string, accessToken: string) {
     await mutation.mutateAsync({ question: normalized });
   };
 
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingHistory(true);
+
+    getDocumentMessages(sessionId, accessToken)
+      .then((history) => {
+        if (cancelled) return;
+        setMessages(history);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setMessages([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingHistory(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId, accessToken]);
+
   return useMemo(
     () => ({
       messages,
       sendQuestion,
       isBusy: mutation.isPending,
+      loadingHistory,
       resetConversation: () => {
         setMessages([]);
         mutation.reset();
       },
     }),
-    [messages, mutation],
+    [messages, mutation, loadingHistory],
   );
 }

@@ -1,10 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { LogOut, Menu } from "lucide-react";
-import type { Dataset } from "@/types/workspace";
+import type { Dataset, StoredDocumentSummary } from "@/types/workspace";
 import { UploadArea } from "@/components/workspace/UploadArea";
 import { Sidebar } from "@/components/workspace/Sidebar";
 import { ChatContainer } from "@/components/workspace/ChatContainer";
-import { uploadDataset } from "@/lib/api/client";
+import { getDocuments, uploadDataset } from "@/lib/api/client";
 import { supabase } from "@/lib/supabase";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { Logo } from "@/components/workspace/Logo";
@@ -49,6 +49,7 @@ function AuthGate() {
 export function App() {
   const { session, loading } = useAuthSession();
   const [dataset, setDataset] = useState<Dataset | null>(null);
+  const [documents, setDocuments] = useState<StoredDocumentSummary[]>([]);
   const [showMobileSchema, setShowMobileSchema] = useState(false);
 
   const accessToken = session?.access_token ?? "";
@@ -61,6 +62,27 @@ export function App() {
   const signOut = async () => {
     await supabase.auth.signOut();
     setDataset(null);
+    setDocuments([]);
+  };
+
+  useEffect(() => {
+    if (!accessToken) return;
+    getDocuments(accessToken)
+      .then((nextDocuments) => setDocuments(nextDocuments))
+      .catch(() => setDocuments([]));
+  }, [accessToken]);
+
+  const openDocument = (doc: StoredDocumentSummary) => {
+    const restoredDataset: Dataset = {
+      sessionId: doc.sessionId,
+      fileName: doc.fileName,
+      columns: doc.columns,
+      preview: [],
+      previewRowCount: 0,
+      sizeBytes: 0,
+      createdAt: doc.createdAt,
+    };
+    setDataset(restoredDataset);
   };
 
   if (loading) {
@@ -83,7 +105,30 @@ export function App() {
             Sign out
           </button>
         </div>
-        <UploadArea onUpload={onUpload} onUploaded={(nextDataset) => setDataset(nextDataset)} />
+        <UploadArea
+          onUpload={onUpload}
+          onUploaded={(nextDataset) => {
+            setDataset(nextDataset);
+            getDocuments(accessToken).then((nextDocuments) => setDocuments(nextDocuments)).catch(() => {});
+          }}
+        />
+        {documents.length > 0 && (
+          <div className="mx-auto mt-6 w-full max-w-3xl px-6 pb-10">
+            <h2 className="mb-3 text-sm font-medium text-muted-foreground">Recent documents</h2>
+            <div className="grid gap-2">
+              {documents.slice(0, 6).map((doc) => (
+                <button
+                  key={doc.sessionId}
+                  onClick={() => openDocument(doc)}
+                  className="rounded-lg border border-border bg-card/40 px-4 py-3 text-left hover:bg-card/70"
+                >
+                  <div className="text-sm font-medium">{doc.fileName}</div>
+                  <div className="text-xs text-muted-foreground">{new Date(doc.createdAt).toLocaleString()}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </main>
     );
   }
@@ -91,7 +136,7 @@ export function App() {
   return (
     <main className="flex min-h-screen w-full overflow-hidden bg-background">
       <div className="hidden lg:block">
-        <Sidebar dataset={dataset} onReset={() => setDataset(null)} />
+        <Sidebar dataset={dataset} onReset={() => setDataset(null)} documents={documents} onSelectDocument={openDocument} />
       </div>
 
       <section className="flex min-h-screen min-w-0 flex-1 flex-col">
@@ -121,7 +166,13 @@ export function App() {
 
         {showMobileSchema && (
           <div className="max-h-[45vh] overflow-y-auto border-b border-border bg-card/50 p-3 lg:hidden">
-            <Sidebar compact dataset={dataset} onReset={() => setDataset(null)} />
+            <Sidebar
+              compact
+              dataset={dataset}
+              onReset={() => setDataset(null)}
+              documents={documents}
+              onSelectDocument={openDocument}
+            />
           </div>
         )}
 

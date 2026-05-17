@@ -22,7 +22,7 @@ export function ChatContainer({ dataset, accessToken }: ChatContainerProps) {
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const { messages, sendQuestion, isBusy } = useDatasetChat(dataset.sessionId, accessToken);
+  const { messages, sendQuestion, isBusy, loadingHistory } = useDatasetChat(dataset.sessionId, accessToken);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -57,17 +57,23 @@ export function ChatContainer({ dataset, accessToken }: ChatContainerProps) {
           <span className="text-sm font-medium">Analysis</span>
           <span className="text-xs text-muted-foreground">/ {dataset.fileName}</span>
         </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--success))]" />
-          Connected · session {dataset.sessionId.slice(0, 8)}
-        </div>
       </div>
 
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto scrollbar-thin">
         <div className="mx-auto w-full max-w-4xl px-4 py-4 lg:px-6 lg:py-6">
-          <DataPreviewTable dataset={dataset} />
+          {dataset.preview.length > 0 ? (
+            <DataPreviewTable dataset={dataset} />
+          ) : (
+            <div className="rounded-xl border border-border bg-card/40 px-4 py-3 text-sm text-muted-foreground">
+              Preview unavailable for restored sessions. You can still view previous chat history below.
+            </div>
+          )}
 
-          {messages.length === 0 ? (
+          {loadingHistory ? (
+            <div className="mt-8">
+              <StatusIndicator />
+            </div>
+          ) : messages.length === 0 ? (
             <div className="mt-8 animate-fade-up lg:mt-10">
               <div className="mb-3 flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
                 <Sparkles className="h-3 w-3 text-primary" />

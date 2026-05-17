@@ -20,3 +20,19 @@ class AnalyzeRequest(BaseModel):
 class AnalyzeResponse(BaseModel):
     answer: Optional[str]
     chart: Optional[str]
+
+
+class DocumentSummary(BaseModel):
+    session_id: str
+    filename: str
+    columns: list[str]
+    dtypes: dict[str, str]
+    created_at: str
+
+
+class ChatMessageRecord(BaseModel):
+    role: str
+    content: str
+    chart: Optional[str] = None
+    is_error: bool = False
+    created_at: str

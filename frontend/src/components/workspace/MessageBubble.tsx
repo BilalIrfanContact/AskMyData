@@ -59,11 +59,11 @@ export function MessageBubble({ message }: MessageBubbleProps) {
                 <div className="rounded-2xl rounded-tl-sm border border-border bg-card/60 px-4 py-3 text-sm leading-relaxed text-foreground/90 backdrop-blur">
                   {renderInlineFormatting(message.result.answer)}
                 </div>
-              ) : (
+              ) : !message.result?.chart ? (
                 <div className="rounded-xl border border-border bg-card/40 px-4 py-3 text-sm text-muted-foreground">
                   No textual answer was returned for this question.
                 </div>
-              )}
+              ) : null}
 
               {message.result?.chart ? <ChartRenderer chart={message.result.chart} /> : null}
             </>

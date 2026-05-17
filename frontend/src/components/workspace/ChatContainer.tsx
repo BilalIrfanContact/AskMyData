@@ -57,10 +57,6 @@ export function ChatContainer({ dataset, accessToken }: ChatContainerProps) {
           <span className="text-sm font-medium">Analysis</span>
           <span className="text-xs text-muted-foreground">/ {dataset.fileName}</span>
         </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--success))]" />
-          Connected · session {dataset.sessionId.slice(0, 8)}
-        </div>
       </div>
 
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto scrollbar-thin">

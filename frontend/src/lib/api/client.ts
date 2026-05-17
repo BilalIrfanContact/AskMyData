@@ -1,4 +1,4 @@
-import type { AnalysisResult, ColumnType, Dataset } from "@/types/workspace";
+import type { AnalysisResult, ChatMessage, ColumnType, Dataset, StoredDocumentSummary } from "@/types/workspace";
 
 type UploadResponse = {
   session_id: string;
@@ -10,6 +10,22 @@ type UploadResponse = {
 type AnalyzeResponse = {
   answer?: string | null;
   chart?: string | null;
+};
+
+type DocumentResponse = {
+  session_id: string;
+  filename: string;
+  columns: string[];
+  dtypes: Record<string, string>;
+  created_at: string;
+};
+
+type MessageResponse = {
+  role: "user" | "assistant";
+  content: string;
+  chart?: string | null;
+  is_error?: boolean;
+  created_at: string;
 };
 
 const API_BASE_URL =
@@ -162,4 +178,57 @@ export async function analyzeQuestion(
     answer: response.answer ?? undefined,
     chart: response.chart ?? undefined,
   };
+}
+
+export async function getDocuments(accessToken: string): Promise<StoredDocumentSummary[]> {
+  const res = await fetch(`${API_BASE_URL}/documents`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  const payload = (await res.json()) as DocumentResponse[] | { detail?: string };
+  if (!res.ok) {
+    throw new Error(normalizeErrorMessage(payload, "Failed to load saved documents."));
+  }
+
+  return (payload as DocumentResponse[]).map((doc) => ({
+    sessionId: doc.session_id,
+    fileName: doc.filename,
+    createdAt: doc.created_at,
+    columns: doc.columns.map((columnName) => ({
+      name: columnName,
+      backendType: doc.dtypes[columnName] ?? "unknown",
+      type: mapPandasDtypeToUiType(doc.dtypes[columnName]),
+    })),
+  }));
+}
+
+export async function getDocumentMessages(sessionId: string, accessToken: string): Promise<ChatMessage[]> {
+  const res = await fetch(`${API_BASE_URL}/documents/${sessionId}/messages`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  const payload = (await res.json()) as MessageResponse[] | { detail?: string };
+  if (!res.ok) {
+    throw new Error(normalizeErrorMessage(payload, "Failed to load chat history."));
+  }
+
+  return (payload as MessageResponse[]).map((message, index) => ({
+    id: `${sessionId}-${index}`,
+    role: message.role,
+    content: message.content,
+    result:
+      message.role === "assistant"
+        ? {
+            answer: message.content || undefined,
+            chart: message.chart ?? undefined,
+            error: message.is_error ? message.content : undefined,
+          }
+        : undefined,
+    status: message.is_error ? "error" : "complete",
+    createdAt: Date.parse(message.created_at) || Date.now(),
+  }));
 }

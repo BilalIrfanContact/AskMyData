@@ -13,6 +13,7 @@ export interface Dataset {
   preview: Record<string, string | number | boolean | null>[];
   previewRowCount: number;
   sizeBytes: number;
+  createdAt?: string;
 }
 
 export interface AnalysisResult {
@@ -31,4 +32,11 @@ export interface ChatMessage {
   result?: AnalysisResult;
   status: MessageStatus;
   createdAt: number;
+}
+
+export interface StoredDocumentSummary {
+  sessionId: string;
+  fileName: string;
+  columns: DatasetColumn[];
+  createdAt: string;
 }

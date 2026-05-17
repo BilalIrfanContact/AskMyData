@@ -1,4 +1,4 @@
-import { Calendar, Database, Hash, History, RotateCcw, ToggleLeft, Type } from "lucide-react";
+import { Calendar, Database, Hash, History, RotateCcw, ToggleLeft, Trash2, Type } from "lucide-react";
 import type { ColumnType, Dataset, StoredDocumentSummary } from "@/types/workspace";
 import { formatBytes } from "@/lib/utils";
 import { Logo } from "@/components/workspace/Logo";
@@ -25,6 +25,7 @@ interface SidebarProps {
   compact?: boolean;
   documents?: StoredDocumentSummary[];
   onSelectDocument?: (doc: StoredDocumentSummary) => void;
+  onDeleteDocument?: (doc: StoredDocumentSummary) => void;
 }
 
 export function Sidebar({
@@ -33,6 +34,7 @@ export function Sidebar({
   compact = false,
   documents = [],
   onSelectDocument,
+  onDeleteDocument,
 }: SidebarProps) {
   return (
     <aside
@@ -77,15 +79,28 @@ export function Sidebar({
             <ul className="px-2 pb-3">
               {documents.slice(0, 8).map((doc) => (
                 <li key={doc.sessionId}>
-                  <button
-                    onClick={() => onSelectDocument?.(doc)}
-                    className="w-full rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-secondary"
-                  >
-                    <div className="truncate text-sm">{doc.fileName}</div>
-                    <div className="text-[10px] text-muted-foreground">
-                      {new Date(doc.createdAt).toLocaleString()}
-                    </div>
-                  </button>
+                  <div className="flex items-start gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-secondary">
+                    <button
+                      onClick={() => onSelectDocument?.(doc)}
+                      className="min-w-0 flex-1 text-left"
+                    >
+                      <div className="truncate text-sm">{doc.fileName}</div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {new Date(doc.createdAt).toLocaleString()}
+                      </div>
+                    </button>
+                    <button
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onDeleteDocument?.(doc);
+                      }}
+                      className="rounded-md p-1 text-muted-foreground hover:bg-destructive/15 hover:text-destructive"
+                      aria-label={`Delete ${doc.fileName}`}
+                      title="Delete dataset"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>

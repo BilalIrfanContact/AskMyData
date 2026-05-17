@@ -14,6 +14,7 @@ export interface Dataset {
   previewRowCount: number;
   sizeBytes: number;
   createdAt?: string;
+  suggestedQuestions?: string[];
 }
 
 export interface AnalysisResult {
@@ -38,5 +39,8 @@ export interface StoredDocumentSummary {
   sessionId: string;
   fileName: string;
   columns: DatasetColumn[];
+  preview: Record<string, string | number | boolean | null>[];
+  previewRowCount: number;
   createdAt: string;
+  suggestedQuestions?: string[];
 }

@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
-import { LogOut, Menu } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { LogOut, Menu, Trash2 } from "lucide-react";
 import type { Dataset, StoredDocumentSummary } from "@/types/workspace";
 import { UploadArea } from "@/components/workspace/UploadArea";
 import { Sidebar } from "@/components/workspace/Sidebar";
 import { ChatContainer } from "@/components/workspace/ChatContainer";
-import { getDocuments, uploadDataset } from "@/lib/api/client";
+import { deleteDocument, getDocuments, uploadDataset } from "@/lib/api/client";
 import { supabase } from "@/lib/supabase";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import { Logo } from "@/components/workspace/Logo";
@@ -51,6 +51,9 @@ export function App() {
   const [dataset, setDataset] = useState<Dataset | null>(null);
   const [documents, setDocuments] = useState<StoredDocumentSummary[]>([]);
   const [showMobileSchema, setShowMobileSchema] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<StoredDocumentSummary | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const accessToken = session?.access_token ?? "";
 
@@ -65,25 +68,83 @@ export function App() {
     setDocuments([]);
   };
 
-  useEffect(() => {
+  const refreshDocuments = useCallback(async () => {
     if (!accessToken) return;
-    getDocuments(accessToken)
-      .then((nextDocuments) => setDocuments(nextDocuments))
-      .catch(() => setDocuments([]));
+    try {
+      const nextDocuments = await getDocuments(accessToken);
+      setDocuments(nextDocuments);
+    } catch {
+      setDocuments([]);
+    }
   }, [accessToken]);
+
+  useEffect(() => {
+    void refreshDocuments();
+  }, [refreshDocuments]);
 
   const openDocument = (doc: StoredDocumentSummary) => {
     const restoredDataset: Dataset = {
       sessionId: doc.sessionId,
       fileName: doc.fileName,
       columns: doc.columns,
-      preview: [],
-      previewRowCount: 0,
+      preview: doc.preview,
+      previewRowCount: doc.previewRowCount,
       sizeBytes: 0,
       createdAt: doc.createdAt,
+      suggestedQuestions: doc.suggestedQuestions,
     };
     setDataset(restoredDataset);
   };
+
+  const removeDocument = async () => {
+    if (!pendingDelete) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteDocument(pendingDelete.sessionId, accessToken);
+      if (dataset?.sessionId === pendingDelete.sessionId) {
+        setDataset(null);
+      }
+      await refreshDocuments();
+      setPendingDelete(null);
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "Failed to delete document.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const deleteModal = pendingDelete ? (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-5 shadow-elegant">
+        <h3 className="text-base font-semibold">Delete dataset?</h3>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Delete <span className="font-medium text-foreground">{pendingDelete.fileName}</span>? This cannot be
+          undone.
+        </p>
+        {deleteError ? (
+          <p className="mt-2 text-xs text-destructive">{deleteError}</p>
+        ) : null}
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            onClick={() => setPendingDelete(null)}
+            disabled={isDeleting}
+            className="rounded-lg border border-border bg-secondary/50 px-3 py-1.5 text-sm text-muted-foreground disabled:opacity-60"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => void removeDocument()}
+            disabled={isDeleting}
+            className="inline-flex items-center gap-2 rounded-lg bg-destructive px-3 py-1.5 text-sm font-medium text-destructive-foreground disabled:opacity-60"
+          >
+            <Trash2 className="h-4 w-4" />
+            {isDeleting ? "Deleting..." : "Delete"}
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   if (loading) {
     return <main className="grid min-h-screen place-items-center text-sm text-muted-foreground">Loading session...</main>;
@@ -109,7 +170,7 @@ export function App() {
           onUpload={onUpload}
           onUploaded={(nextDataset) => {
             setDataset(nextDataset);
-            getDocuments(accessToken).then((nextDocuments) => setDocuments(nextDocuments)).catch(() => {});
+            void refreshDocuments();
           }}
         />
         {documents.length > 0 && (
@@ -117,18 +178,31 @@ export function App() {
             <h2 className="mb-3 text-sm font-medium text-muted-foreground">Recent documents</h2>
             <div className="grid gap-2">
               {documents.slice(0, 6).map((doc) => (
-                <button
+                <div
                   key={doc.sessionId}
-                  onClick={() => openDocument(doc)}
-                  className="rounded-lg border border-border bg-card/40 px-4 py-3 text-left hover:bg-card/70"
+                  className="flex items-start gap-2 rounded-lg border border-border bg-card/40 px-4 py-3 hover:bg-card/70"
                 >
-                  <div className="text-sm font-medium">{doc.fileName}</div>
-                  <div className="text-xs text-muted-foreground">{new Date(doc.createdAt).toLocaleString()}</div>
-                </button>
+                  <button onClick={() => openDocument(doc)} className="min-w-0 flex-1 text-left">
+                    <div className="text-sm font-medium">{doc.fileName}</div>
+                    <div className="text-xs text-muted-foreground">{new Date(doc.createdAt).toLocaleString()}</div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setDeleteError(null);
+                      setPendingDelete(doc);
+                    }}
+                    className="rounded-md p-1 text-muted-foreground hover:bg-destructive/15 hover:text-destructive"
+                    aria-label={`Delete ${doc.fileName}`}
+                    title="Delete dataset"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               ))}
             </div>
           </div>
         )}
+        {deleteModal}
       </main>
     );
   }
@@ -136,7 +210,16 @@ export function App() {
   return (
     <main className="flex min-h-screen w-full overflow-hidden bg-background">
       <div className="hidden lg:block">
-        <Sidebar dataset={dataset} onReset={() => setDataset(null)} documents={documents} onSelectDocument={openDocument} />
+        <Sidebar
+          dataset={dataset}
+          onReset={() => setDataset(null)}
+          documents={documents}
+          onSelectDocument={openDocument}
+          onDeleteDocument={(doc) => {
+            setDeleteError(null);
+            setPendingDelete(doc);
+          }}
+        />
       </div>
 
       <section className="flex min-h-screen min-w-0 flex-1 flex-col">
@@ -172,12 +255,18 @@ export function App() {
               onReset={() => setDataset(null)}
               documents={documents}
               onSelectDocument={openDocument}
+              onDeleteDocument={(doc) => {
+                setDeleteError(null);
+                setPendingDelete(doc);
+              }}
             />
           </div>
         )}
 
         <ChatContainer dataset={dataset} accessToken={accessToken} />
       </section>
+
+      {deleteModal}
     </main>
   );
 }

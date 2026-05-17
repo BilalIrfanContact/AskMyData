@@ -7,8 +7,7 @@ import pandas as pd
 from fastapi import UploadFile
 
 
-def load_csv(file: UploadFile) -> tuple[pd.DataFrame, list[str], dict[str, str], list[list[Any]]]:
-    raw = file.file.read()
+def load_csv_bytes(raw: bytes) -> tuple[pd.DataFrame, list[str], dict[str, str], list[list[Any]]]:
     if not raw:
         raise ValueError("The uploaded CSV is empty.")
 
@@ -34,3 +33,7 @@ def load_csv(file: UploadFile) -> tuple[pd.DataFrame, list[str], dict[str, str],
     dtypes = {str(col): str(dtype) for col, dtype in df.dtypes.items()}
     preview = df.head(5).values.tolist()
     return df, columns, dtypes, preview
+
+
+def load_csv(file: UploadFile) -> tuple[pd.DataFrame, list[str], dict[str, str], list[list[Any]]]:
+    return load_csv_bytes(file.file.read())

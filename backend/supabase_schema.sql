@@ -6,8 +6,20 @@ create table if not exists public.documents (
   filename text not null,
   columns jsonb not null default '[]'::jsonb,
   dtypes jsonb not null default '{}'::jsonb,
+  preview jsonb not null default '[]'::jsonb,
+  suggested_questions jsonb not null default '[]'::jsonb,
+  storage_path text,
   created_at timestamptz not null default now()
 );
+
+alter table public.documents
+add column if not exists storage_path text;
+
+alter table public.documents
+add column if not exists preview jsonb not null default '[]'::jsonb;
+
+alter table public.documents
+add column if not exists suggested_questions jsonb not null default '[]'::jsonb;
 
 create table if not exists public.messages (
   id bigint generated always as identity primary key,

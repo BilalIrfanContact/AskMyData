@@ -6,7 +6,7 @@ import { MessageBubble } from "@/components/workspace/MessageBubble";
 import { StatusIndicator } from "@/components/workspace/StatusIndicator";
 import { useDatasetChat } from "@/hooks/useDatasetChat";
 
-const SUGGESTED_QUESTIONS = [
+const DEFAULT_SUGGESTED_QUESTIONS = [
   "Summarize this dataset",
   "Which columns have missing values?",
   "Show a chart of the strongest trend in this data",
@@ -23,6 +23,10 @@ export function ChatContainer({ dataset, accessToken }: ChatContainerProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { messages, sendQuestion, isBusy, loadingHistory } = useDatasetChat(dataset.sessionId, accessToken);
+  const suggestedQuestions =
+    dataset.suggestedQuestions && dataset.suggestedQuestions.length > 0
+      ? dataset.suggestedQuestions
+      : DEFAULT_SUGGESTED_QUESTIONS;
 
   useEffect(() => {
     scrollRef.current?.scrollTo({
@@ -80,7 +84,7 @@ export function ChatContainer({ dataset, accessToken }: ChatContainerProps) {
                 Suggested questions
               </div>
               <div className="grid gap-2 sm:grid-cols-2">
-                {SUGGESTED_QUESTIONS.map((question) => (
+                {suggestedQuestions.map((question) => (
                   <button
                     key={question}
                     onClick={() => void submitQuestion(question)}

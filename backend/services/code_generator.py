@@ -53,8 +53,9 @@ class CodeGenerator:
         key = api_key or os.getenv("OPENAI_API_KEY")
         if not key:
             raise RuntimeError("OPENAI_API_KEY is not set")
+        configured_model = os.getenv("OPENAI_CHAT_MODEL")
         self.client = OpenAI(api_key=key)
-        self.model = model
+        self.model = configured_model or model
 
     def generate_code(
         self,
@@ -108,6 +109,41 @@ class CodeGenerator:
 
         code = response.choices[0].message.content or ""
         return normalize_generated_code(code)
+
+    def generate_suggested_questions(
+        self,
+        *,
+        columns: list[str],
+        dtypes: dict[str, str],
+        preview: list[list[Any]],
+        row_count: int | None = None,
+        column_count: int | None = None,
+    ) -> list[str]:
+        context = {
+            "columns": columns,
+            "dtypes": dtypes,
+            "preview": preview,
+            "row_count": row_count,
+            "column_count": column_count,
+        }
+        system_prompt = (
+            "You are helping a user explore a dataset. "
+            "Return exactly 4 concise, practical first questions tailored to this dataset. "
+            "Questions must be plain English, no numbering, no markdown, no extra text. "
+            "Each question should be answerable from the dataset."
+        )
+        response = self.client.chat.completions.create(
+            model=self.model,
+            temperature=0.3,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": "Dataset context:\n" + json.dumps(context, indent=2)},
+            ],
+        )
+        content = (response.choices[0].message.content or "").strip()
+        questions = [line.strip("-* \t") for line in content.splitlines() if line.strip()]
+        cleaned = [q for q in questions if "?" in q][:4]
+        return cleaned
 
 
 def strip_code_fences(code: str) -> str:

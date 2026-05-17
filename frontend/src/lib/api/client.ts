@@ -5,6 +5,7 @@ type UploadResponse = {
   columns: string[];
   dtypes: Record<string, string>;
   preview: unknown[][];
+  suggested_questions?: string[];
 };
 
 type AnalyzeResponse = {
@@ -17,6 +18,8 @@ type DocumentResponse = {
   filename: string;
   columns: string[];
   dtypes: Record<string, string>;
+  preview?: unknown[][];
+  suggested_questions?: string[];
   created_at: string;
 };
 
@@ -142,6 +145,7 @@ export async function uploadDataset(
       backendType: response.dtypes[columnName] ?? "unknown",
       type: mapPandasDtypeToUiType(response.dtypes[columnName]),
     })),
+    suggestedQuestions: (response.suggested_questions ?? []).slice(0, 4),
   };
 }
 
@@ -192,16 +196,29 @@ export async function getDocuments(accessToken: string): Promise<StoredDocumentS
     throw new Error(normalizeErrorMessage(payload, "Failed to load saved documents."));
   }
 
-  return (payload as DocumentResponse[]).map((doc) => ({
-    sessionId: doc.session_id,
-    fileName: doc.filename,
-    createdAt: doc.created_at,
-    columns: doc.columns.map((columnName) => ({
-      name: columnName,
-      backendType: doc.dtypes[columnName] ?? "unknown",
-      type: mapPandasDtypeToUiType(doc.dtypes[columnName]),
-    })),
-  }));
+  return (payload as DocumentResponse[]).map((doc) => {
+    const preview = doc.preview?.map((row) => {
+      const rowObject: Record<string, string | number | boolean | null> = {};
+      doc.columns.forEach((columnName, columnIndex) => {
+        rowObject[columnName] = parseCell(row?.[columnIndex]);
+      });
+      return rowObject;
+    }) ?? [];
+
+    return {
+      sessionId: doc.session_id,
+      fileName: doc.filename,
+      createdAt: doc.created_at,
+      preview,
+      previewRowCount: preview.length,
+      suggestedQuestions: (doc.suggested_questions ?? []).slice(0, 4),
+      columns: doc.columns.map((columnName) => ({
+        name: columnName,
+        backendType: doc.dtypes[columnName] ?? "unknown",
+        type: mapPandasDtypeToUiType(doc.dtypes[columnName]),
+      })),
+    };
+  });
 }
 
 export async function getDocumentMessages(sessionId: string, accessToken: string): Promise<ChatMessage[]> {
@@ -231,4 +248,24 @@ export async function getDocumentMessages(sessionId: string, accessToken: string
     status: message.is_error ? "error" : "complete",
     createdAt: Date.parse(message.created_at) || Date.now(),
   }));
+}
+
+export async function deleteDocument(sessionId: string, accessToken: string): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/documents/${sessionId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  let payload: { detail?: string } | null = null;
+  try {
+    payload = await res.json();
+  } catch {
+    payload = null;
+  }
+
+  if (!res.ok) {
+    throw new Error(normalizeErrorMessage(payload, "Failed to delete document."));
+  }
 }

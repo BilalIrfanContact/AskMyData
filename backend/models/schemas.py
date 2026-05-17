@@ -10,6 +10,7 @@ class UploadResponse(BaseModel):
     columns: list[str]
     dtypes: dict[str, str]
     preview: list[list[Any]]
+    suggested_questions: list[str] = []
 
 
 class AnalyzeRequest(BaseModel):
@@ -27,6 +28,8 @@ class DocumentSummary(BaseModel):
     filename: str
     columns: list[str]
     dtypes: dict[str, str]
+    preview: list[list[Any]]
+    suggested_questions: list[str] = []
     created_at: str
 
 

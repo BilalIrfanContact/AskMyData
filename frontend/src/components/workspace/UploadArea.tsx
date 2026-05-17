@@ -130,9 +130,9 @@ export function UploadArea({ onUpload, onUploaded }: UploadAreaProps) {
 
       <div className="mt-10 grid w-full grid-cols-1 gap-3 sm:grid-cols-3">
         {[
-          { title: "Schema-aware", description: "Uses backend-detected column types" },
-          { title: "Real execution", description: "Answers come from your live FastAPI service" },
-          { title: "Charts inline", description: "Base64 chart outputs are rendered directly" },
+          { title: "Ask in plain English", description: "No formulas or coding needed to explore your data." },
+          { title: "Instant visual insights", description: "Get charts and trends you can understand at a glance." },
+          { title: "Ready to share", description: "Turn quick questions into answers you can present confidently." },
         ].map((feature) => (
           <div key={feature.title} className="rounded-xl border border-border bg-card/40 p-4 backdrop-blur">
             <div className="flex items-center gap-2 text-sm font-medium">

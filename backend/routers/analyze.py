@@ -6,10 +6,16 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from backend.models.schemas import AnalyzeRequest, AnalyzeResponse
 from backend.services.auth import AuthUser, get_current_user
+from backend.services.csv_loader import load_csv_bytes
 from backend.services.code_executor import execute_generated_code
 from backend.services.code_generator import CodeGenerator, REFUSAL_MESSAGE
-from backend.services.session_store import active_sessions
-from backend.services.supabase_store import persist_chat_message
+from backend.services.session_store import SessionData, active_sessions
+from backend.services.supabase_store import (
+    get_document_for_user,
+    list_messages_for_session,
+    load_dataset_file,
+    persist_chat_message,
+)
 
 router = APIRouter()
 _code_generator: CodeGenerator | None = None
@@ -132,12 +138,47 @@ def is_likely_in_scope(question: str, columns: list[str]) -> bool:
     return False
 
 
+def restore_session_if_needed(session_id: str, user_id: str) -> SessionData | None:
+    existing = active_sessions.get(session_id)
+    if existing is not None:
+        return existing
+
+    document = get_document_for_user(user_id=user_id, session_id=session_id)
+    if document is None:
+        return None
+
+    storage_path = str(document.get("storage_path") or "").strip()
+    if not storage_path:
+        return None
+
+    raw = load_dataset_file(storage_path=storage_path)
+    if not raw:
+        return None
+
+    df, _, _, _ = load_csv_bytes(raw)
+    restored = SessionData(
+        df=df,
+        user_id=user_id,
+        file_name=str(document.get("filename") or "dataset.csv"),
+    )
+
+    history_rows = list_messages_for_session(user_id=user_id, session_id=session_id)
+    restored.history = [
+        {"role": str(row.get("role", "assistant")), "content": str(row.get("content", ""))}
+        for row in history_rows
+        if row.get("role") in {"user", "assistant"} and row.get("content")
+    ][-8:]
+
+    active_sessions[session_id] = restored
+    return restored
+
+
 @router.post("/analyze", response_model=AnalyzeResponse)
 async def analyze(
     request: AnalyzeRequest,
     current_user: AuthUser = Depends(get_current_user),
 ) -> AnalyzeResponse:
-    session = active_sessions.get(request.session_id)
+    session = restore_session_if_needed(request.session_id, current_user.user_id)
     if session is None:
         raise HTTPException(status_code=404, detail="Session not found. Upload a CSV first.")
     if session.user_id != current_user.user_id:

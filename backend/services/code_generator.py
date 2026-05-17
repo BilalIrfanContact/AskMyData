@@ -53,8 +53,9 @@ class CodeGenerator:
         key = api_key or os.getenv("OPENAI_API_KEY")
         if not key:
             raise RuntimeError("OPENAI_API_KEY is not set")
+        configured_model = os.getenv("OPENAI_CHAT_MODEL")
         self.client = OpenAI(api_key=key)
-        self.model = model
+        self.model = configured_model or model
 
     def generate_code(
         self,

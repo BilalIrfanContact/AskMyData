@@ -96,7 +96,7 @@ export function UploadArea({ onUpload, onUploaded }: UploadAreaProps) {
               {progress !== null ? `Uploading ${activeFile}...` : "Drop your CSV here, or click to browse"}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              {progress !== null ? "Sending data to your backend" : "UTF-8 CSV with a header row"}
+              {progress !== null ? "Preparing your data workspace..." : "CSV file with a header row"}
             </p>
           </div>
 
